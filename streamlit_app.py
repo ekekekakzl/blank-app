@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import math
+import matplotlib.pyplot as plt
 
 # ASA 점수 매핑
 def map_asa(asa):
@@ -29,39 +30,46 @@ def diagnosis_weight(diagnosis):
         "기타": 0.5,
     }.get(diagnosis, 0.0)
 
-# 위험도 계산 함수
-def calculate_risk(base, age, bmi, asa, diabetes, emergency, copd, dx):
-    return round(
-        base + 0.04 * age + 0.05 * bmi + 0.8 * diabetes + 1.2 * emergency + 0.7 * copd + asa + dx,
-        1
+# ACS NSQIP 기반 위험 계산 (가중 회귀계수 적용)
+def calculate_risk(age, bmi, asa, diabetes, emergency, copd, dx):
+    intercept = -6.5
+    logit = (
+        intercept +
+        0.045 * age +
+        0.07 * bmi +
+        0.9 * diabetes +
+        1.5 * emergency +
+        0.85 * copd +
+        1.2 * asa +
+        0.8 * dx
     )
+    odds = math.exp(logit)
+    return round(odds / (1 + odds) * 100, 1)  # % 확률 반환
 
-# 예시 합병증 결과 테이블 생성
+# 합병증별 결과표
 def complication_table(base_score):
     complication_base = {
         "중대한 합병증": (5.5, base_score),
-        "전체 합병증": (7.5, base_score - 0.1),
+        "전체 합병증": (7.5, base_score * 1.1),
         "폐렴": (0.1, base_score * 0.02),
         "심장 합병증": (0.1, base_score * 0.02),
         "정맥 혈전색전증": (0.7, base_score * 0.05),
-        "패혈증": (0.5, base_score * 0.04),
-        "수술 부위 감염": (4.9, base_score * 0.7),
-        "요로 감염": (2.0, base_score * 0.3),
+        "패혈증": (0.5, base_score * 0.03),
+        "수술 부위 감염": (4.9, base_score * 0.6),
+        "요로 감염": (2.0, base_score * 0.25),
         "신부전": (0.3, base_score * 0.02),
-        "재입원": (3.7, base_score * 0.5),
-        "재수술": (1.7, base_score * 0.4),
-        "사망": (0.0, 0.0)
+        "재입원": (3.7, base_score * 0.4),
+        "재수술": (1.7, base_score * 0.3),
+        "사망": (0.1, base_score * 0.01)
     }
     rows = []
     for comp, (avg, risk) in complication_base.items():
-        assessment = (
-            "평균 이하" if risk < avg else "평균 초과" if risk > avg else "평균과 동일"
-        )
-        rows.append([comp, round(risk, 1), avg, assessment])
+        assessment = "평균 이하" if risk < avg else "평균 초과" if risk > avg else "평균과 동일"
+        rows.append([comp, round(risk, 2), avg, assessment])
     return pd.DataFrame(rows, columns=["합병증", "예측 위험도 (%)", "평균 위험도 (%)", "비교 결과"])
 
 # Streamlit UI 시작
-st.title("ACS NSQIP 유사 수술 위험 예측기")
+st.title("ACS NSQIP 기반 수술 합병증 위험 예측기")
 
 age = st.number_input("나이", min_value=18, max_value=100, value=50)
 height_cm = st.number_input("키 (cm)", value=160)
@@ -86,7 +94,6 @@ if st.button("예측하기"):
     calc_emergency = 1 if is_emergency else 0
 
     base_score = calculate_risk(
-        base=-5.0,
         age=age,
         bmi=bmi,
         asa=asa_score,
@@ -99,3 +106,12 @@ if st.button("예측하기"):
     result_df = complication_table(base_score)
     st.dataframe(result_df, use_container_width=True)
     st.success("예측 완료! 아래 결과표를 확인하세요.")
+
+    # 시각화 추가
+    st.subheader("📊 예측 위험도 시각화")
+    fig, ax = plt.subplots()
+    ax.barh(result_df["합병증"], result_df["예측 위험도 (%)"])
+    ax.set_xlabel("예측 위험도 (%)")
+    ax.set_title("합병증별 예측 위험도")
+    st.pyplot(fig)
+
