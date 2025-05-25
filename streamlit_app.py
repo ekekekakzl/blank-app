@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import math
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'DejaVu Sans'  # 한글 폰트 설정
 
 # ASA 점수 매핑
 def map_asa(asa):
@@ -111,7 +113,7 @@ if st.button("예측하기"):
     st.subheader("📊 예측 위험도 시각화")
     fig, ax = plt.subplots()
     ax.barh(result_df["합병증"], result_df["예측 위험도 (%)"])
-    ax.set_xlabel("예측 위험도 (%)")
-    ax.set_title("합병증별 예측 위험도")
+    ax.set_xlabel("예측 위험도 (%)", fontsize=12)
+    ax.set_title("합병증별 예측 위험도", fontsize=14)
+    ax.tick_params(labelsize=10)
     st.pyplot(fig)
-
