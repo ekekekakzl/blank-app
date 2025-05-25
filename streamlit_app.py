@@ -6,7 +6,8 @@ import matplotlib
 import platform
 import matplotlib.font_manager as fm
 
-    import platform
+import platform
+
 if platform.system() == "Windows":
     matplotlib.rcParams['font.family'] = 'Malgun Gothic'
 elif platform.system() == "Darwin":
