@@ -6,14 +6,13 @@ import matplotlib
 import platform
 import matplotlib.font_manager as fm
 
-# 한글 글꼴 설정
+    import platform
 if platform.system() == "Windows":
     matplotlib.rcParams['font.family'] = 'Malgun Gothic'
-elif platform.system() == "Darwin":  # macOS
+elif platform.system() == "Darwin":
     matplotlib.rcParams['font.family'] = 'AppleGothic'
 else:
- matplotlib.rcParams['font.family'] = 'DejaVu Sans'  # Linux 기본 폰트
-matplotlib.rcParams['axes.unicode_minus'] = False
+    matplotlib.rcParams['font.family'] = 'DejaVu Sans'
 
 # ASA 점수 매핑 및 설명
 asa_explanation = {
