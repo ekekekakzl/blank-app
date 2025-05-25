@@ -12,8 +12,7 @@ if platform.system() == "Windows":
 elif platform.system() == "Darwin":  # macOS
     matplotlib.rcParams['font.family'] = 'AppleGothic'
 else:
-    font_path = fm.findfont(fm.FontProperties(family='NanumGothic'))
-    matplotlib.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
+ matplotlib.rcParams['font.family'] = 'DejaVu Sans'  # Linux 기본 폰트
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 # ASA 점수 매핑 및 설명
