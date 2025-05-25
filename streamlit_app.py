@@ -3,7 +3,16 @@ import pandas as pd
 import math
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams['font.family'] = 'DejaVu Sans'  # 한글 폰트 설정
+import platform
+
+# 한글 글꼴 설정
+if platform.system() == "Windows":
+    matplotlib.rcParams['font.family'] = 'Malgun Gothic'
+elif platform.system() == "Darwin":  # macOS
+    matplotlib.rcParams['font.family'] = 'AppleGothic'
+else:
+    matplotlib.rcParams['font.family'] = 'DejaVu Sans'
+matplotlib.rcParams['axes.unicode_minus'] = False
 
 # ASA 점수 매핑
 def map_asa(asa):
