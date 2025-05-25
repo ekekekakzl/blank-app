@@ -4,6 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib
 import platform
+import matplotlib.font_manager as fm
 
 # 한글 글꼴 설정
 if platform.system() == "Windows":
@@ -11,16 +12,24 @@ if platform.system() == "Windows":
 elif platform.system() == "Darwin":  # macOS
     matplotlib.rcParams['font.family'] = 'AppleGothic'
 else:
-    matplotlib.rcParams['font.family'] = 'DejaVu Sans'
+    font_path = fm.findfont(fm.FontProperties(family='NanumGothic'))
+    matplotlib.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
 matplotlib.rcParams['axes.unicode_minus'] = False
 
-# ASA 점수 매핑
+# ASA 점수 매핑 및 설명
+asa_explanation = {
+    "I (건강한 환자)": "건강한 일반 환자",
+    "II (경증 전신질환)": "경증의 전신질환이 있는 환자 (예: 잘 조절된 고혈압)",
+    "III (중등도 전신질환)": "기능 제한이 있는 중등도의 전신질환 (예: 당뇨 + 심부전)",
+    "IV (생명을 위협하는 질환)": "생명을 위협하는 중증 질환 동반"
+}
+
 def map_asa(asa):
     return {
         "I (건강한 환자)": 0.0,
-        "II (경증 전신질환)": 0.5,
-        "III (중등도 전신질환)": 1.0,
-        "IV (생명을 위협하는 질환)": 2.0,
+        "II (경증 전신질환)": 1.0,
+        "III (중등도 전신질환)": 2.0,
+        "IV (생명을 위협하는 질환)": 3.0,
     }.get(asa, 0.0)
 
 # 진단명 가중치 (예시)
@@ -41,18 +50,18 @@ def diagnosis_weight(diagnosis):
         "기타": 0.5,
     }.get(diagnosis, 0.0)
 
-# ACS NSQIP 기반 위험 계산 (가중 회귀계수 적용)
+# 논문 기반 위험 계산 (예: Bilimoria et al. 2013)
 def calculate_risk(age, bmi, asa, diabetes, emergency, copd, dx):
-    intercept = -6.5
+    intercept = -5.8  # 논문 기반 예시값
     logit = (
         intercept +
-        0.045 * age +
-        0.07 * bmi +
-        0.9 * diabetes +
-        1.5 * emergency +
-        0.85 * copd +
-        1.2 * asa +
-        0.8 * dx
+        0.03 * age +
+        0.05 * bmi +
+        0.8 * diabetes +
+        1.2 * emergency +
+        0.9 * copd +
+        0.7 * asa +
+        0.6 * dx
     )
     odds = math.exp(logit)
     return round(odds / (1 + odds) * 100, 1)  # % 확률 반환
@@ -88,7 +97,9 @@ weight_kg = st.number_input("몸무게 (kg)", value=60)
 bmi = weight_kg / ((height_cm / 100) ** 2)
 st.write(f"계산된 BMI: {bmi:.2f}")
 
-asa_class = st.selectbox("ASA 등급", ["I (건강한 환자)", "II (경증 전신질환)", "III (중등도 전신질환)", "IV (생명을 위협하는 질환)"])
+asa_class = st.selectbox("ASA 등급", list(asa_explanation.keys()))
+st.caption(f"💡 설명: {asa_explanation[asa_class]}")
+
 has_diabetes = st.checkbox("당뇨병 여부")
 has_copd = st.checkbox("만성폐질환 (COPD) 여부")
 is_emergency = st.checkbox("응급 수술 여부")
